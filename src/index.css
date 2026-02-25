@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+/* Global resets that can't be done with Tailwind utilities alone */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Courier New', monospace;
+  background: #0a1015;
+  color: white;
+}
