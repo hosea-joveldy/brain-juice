@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-import { COLORS, COLOR_HEX, TOTAL_TIME, STREAK_BONUS, STREAK_NEEDED, BOARD_RATIO } from "./constants";
+import { TOTAL_TIME, STREAK_BONUS, STREAK_NEEDED, BOARD_RATIO } from "./constants";
 import { generateShapes, generateQuestion } from "./utils";
 import { usePhysics } from "./hooks/usePhysics";
 import Board          from "./components/Board";
@@ -36,7 +36,10 @@ export default function App() {
 
   // ── Board dimensions — memoised so they don't recompute on every render ──
   const boardWidth  = useMemo(() => Math.min(420, window.innerWidth - 32), []);
-  const boardHeight = useMemo(() => Math.round(boardWidth * BOARD_RATIO), [boardWidth]);
+  const boardHeight = useMemo(() => {
+    const maxHeight = window.innerHeight - 280;
+    return Math.min(Math.round(boardWidth * BOARD_RATIO), maxHeight);
+  }, [boardWidth]);
 
   // ── Physics hook ─────────────────────────────────────────────────────────
   const { start: startPhysics, stop: stopPhysics } = usePhysics(
@@ -177,8 +180,7 @@ export default function App() {
   // ── Game screen ───────────────────────────────────────────────────────────
   return (
     <div
-      className="min-h-screen flex flex-col items-center justify-center font-mono text-white p-4 select-none"
-      style={{ background: "linear-gradient(135deg, #0a1015 0%, #0f1e2e 100%)" }}
+      className="game-screen min-h-screen flex flex-col items-center justify-start font-mono text-white p-4 pt-10 select-none"
     >
       <style>{`
         @keyframes pop {
@@ -271,19 +273,6 @@ export default function App() {
           </div>
         )}
         {phase !== "board" && <div className="h-14" />}
-      </div>
-
-      {/* Color legend */}
-      <div className="flex gap-3.5 mt-3.5 flex-wrap justify-center">
-        {COLORS.map((c) => (
-          <div key={c} className="flex items-center gap-1.5 text-[11px] text-white/35 tracking-wide">
-            <div
-              className="w-2.5 h-2.5 rounded-full border border-white/20"
-              style={{ background: COLOR_HEX[c] }}
-            />
-            {c}
-          </div>
-        ))}
       </div>
     </div>
   );
