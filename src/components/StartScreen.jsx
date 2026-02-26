@@ -25,11 +25,6 @@ export default function StartScreen({ onStart }) {
         Count the shapes. Beat the clock. Chain {STREAK_NEEDED} correct answers for bonus time.
       </p>
 
-      <div className="mt-8 flex flex-col gap-2.5 text-sm text-white/40 tracking-wide">
-        <span>⏱ {TOTAL_TIME} seconds on the clock</span>
-        <span>🔥 {STREAK_NEEDED}-streak = +{STREAK_BONUS} seconds</span>
-      </div>
-
       <button
         onClick={onStart}
         onMouseDown={(e) => (e.currentTarget.style.transform = "scale(0.97)")}

@@ -31,6 +31,7 @@ export default function App() {
   const timerRef  = useRef(null);
   const timeRef   = useRef(TOTAL_TIME); // keeps timer in sync with bonus additions
   const inputRef  = useRef(null);
+  const shapeCountRef = useRef(8);
   // Tracks whether the game is still live — used to guard the newRound timeout
   const activeRef = useRef(false);
 
@@ -50,9 +51,10 @@ export default function App() {
 
   // ── Helpers ──────────────────────────────────────────────────────────────
   const newRound = useCallback(() => {
-    const s = generateShapes(6 + Math.floor(Math.random() * 4), boardWidth, boardHeight);
-    setShapes(s);
+    shapeCountRef.current = Math.min(shapeCountRef.current + 1, 16);
+    const s = generateShapes(shapeCountRef.current, boardWidth, boardHeight);
     setQuestion(generateQuestion(s));
+    setShapes(s);
     setInput("");
     setPhase("question");
     stopPhysics();
@@ -62,10 +64,11 @@ export default function App() {
   const startGame = useCallback(() => {
     clearInterval(timerRef.current);
     stopPhysics();
-    const s = generateShapes(6 + Math.floor(Math.random() * 4), boardWidth, boardHeight);
+    const s = generateShapes(8, boardWidth, boardHeight);
     const q = generateQuestion(s);
     timeRef.current   = TOTAL_TIME;
     activeRef.current = true;
+    shapeCountRef.current = 8;
     setShapes(s);
     setQuestion(q);
     setInput("");
@@ -214,7 +217,7 @@ export default function App() {
 
       {/* Board + overlays */}
       <div className="relative rounded-xl">
-        <Board shapes={shapes} width={boardWidth} height={boardHeight} />
+        <Board shapes={phase === "question" ? [] : shapes} width={boardWidth} height={boardHeight} />
 
         {/* Question overlay */}
         {phase === "question" && (
