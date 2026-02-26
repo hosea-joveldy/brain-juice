@@ -28,14 +28,13 @@ export default function App() {
   const [bonusText, setBonusText] = useState(false);
 
   // ── Refs ─────────────────────────────────────────────────────────────────
-  const timerRef  = useRef(null);
-  const timeRef   = useRef(TOTAL_TIME); // keeps timer in sync with bonus additions
-  const inputRef  = useRef(null);
-  const shapeCountRef = useRef(8);
-  // Tracks whether the game is still live — used to guard the newRound timeout
-  const activeRef = useRef(false);
+  const timerRef      = useRef(null);
+  const timeRef       = useRef(TOTAL_TIME);
+  const inputRef      = useRef(null);
+  const activeRef     = useRef(false);
+  const shapeCountRef = useRef(8); // tracks shape count without triggering re-renders
 
-  // ── Board dimensions — memoised so they don't recompute on every render ──
+  // ── Board dimensions ─────────────────────────────────────────────────────
   const boardWidth  = useMemo(() => Math.min(420, window.innerWidth - 32), []);
   const boardHeight = useMemo(() => {
     const maxHeight = window.innerHeight - 280;
@@ -53,22 +52,21 @@ export default function App() {
   const newRound = useCallback(() => {
     shapeCountRef.current = Math.min(shapeCountRef.current + 1, 16);
     const s = generateShapes(shapeCountRef.current, boardWidth, boardHeight);
-    setQuestion(generateQuestion(s));
     setShapes(s);
+    setQuestion(generateQuestion(s));
     setInput("");
     setPhase("question");
     stopPhysics();
   }, [stopPhysics, boardWidth, boardHeight]);
 
-  // initRound is the single source of truth for setting up a fresh round —
   const startGame = useCallback(() => {
     clearInterval(timerRef.current);
     stopPhysics();
+    shapeCountRef.current = 8;
     const s = generateShapes(8, boardWidth, boardHeight);
     const q = generateQuestion(s);
     timeRef.current   = TOTAL_TIME;
     activeRef.current = true;
-    shapeCountRef.current = 8;
     setShapes(s);
     setQuestion(q);
     setInput("");
@@ -91,17 +89,12 @@ export default function App() {
   // ── Timer ─────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (screen !== "game") return;
-
-    // Always start from TOTAL_TIME when entering the game screen.
-    // (startGame also resets timeRef, but belt-and-braces here doesn't hurt.)
     timeRef.current = TOTAL_TIME;
-
     timerRef.current = setInterval(() => {
       const next = timeRef.current - 1;
       timeRef.current = next;
       setTimeLeft(next);
       setElapsed((e) => e + 1);
-
       if (next <= 0) {
         clearInterval(timerRef.current);
         stopPhysics();
@@ -109,7 +102,6 @@ export default function App() {
         setScreen("result");
       }
     }, 1000);
-
     return () => clearInterval(timerRef.current);
   }, [screen, stopPhysics]);
 
@@ -121,32 +113,26 @@ export default function App() {
   }, [startPhysics]);
 
   const handleSubmit = useCallback(() => {
-    if (phase !== "board") return;
+    if (phase !== "board" || !question) return;
     const val = parseInt(input.trim(), 10);
     if (isNaN(val)) return;
-
     stopPhysics();
-    const isCorrect  = val === question.answer;
+    const isCorrect = val === question.answer;
     setFeedback(isCorrect);
     setPhase("feedback");
-
     const newStreak = isCorrect ? streak + 1 : 0;
     setStreak(newStreak);
     setStats((prev) => ({
       correct: prev.correct + (isCorrect ? 1 : 0),
       total:   prev.total + 1,
     }));
-
     if (newStreak > 0 && newStreak % STREAK_NEEDED === 0) {
       timeRef.current += STREAK_BONUS;
-      // Clamp displayed timeLeft so TimerRing pct never exceeds 1
       setTimeLeft((t) => Math.min(t + STREAK_BONUS, TOTAL_TIME * 2));
       setBonusText(true);
       setTimeout(() => setBonusText(false), 2000);
     }
-
     setTimeout(() => {
-      // Guard: don't start a new round if the timer expired during the 900ms window
       if (!activeRef.current) return;
       setFeedback(null);
       newRound();
@@ -162,7 +148,6 @@ export default function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, [handleRestart]);
 
-  // Memoised so the input's onKeyDown prop reference is stable
   const handleKey = useCallback((e) => {
     if (e.key !== "Enter") return;
     if (phase === "question") handleShowBoard();
@@ -183,7 +168,8 @@ export default function App() {
   // ── Game screen ───────────────────────────────────────────────────────────
   return (
     <div
-      className="game-screen min-h-screen flex flex-col items-center justify-start font-mono text-white p-4 pt-10 select-none"
+      className="game-screen min-h-screen w-full flex flex-col items-center justify-start font-mono text-white p-4 pt-8 select-none"
+      style={{ background: "linear-gradient(135deg, #0a1015 0%, #0f1e2e 100%)" }}
     >
       <style>{`
         @keyframes pop {
@@ -206,6 +192,7 @@ export default function App() {
 
       <BonusFlash show={bonusText} />
 
+      {/* Header — always visible so timer is always shown */}
       <GameHeader
         timeLeft={timeLeft}
         total={TOTAL_TIME}
@@ -215,14 +202,18 @@ export default function App() {
         onRestart={handleRestart}
       />
 
-      {/* Board + overlays */}
-      <div className="relative rounded-xl">
-        <Board shapes={phase === "question" ? [] : shapes} width={boardWidth} height={boardHeight} />
+      {/* Board + all overlays including input */}
+      <div className="relative rounded-xl mt-3">
+        <Board
+          shapes={phase === "question" ? [] : shapes}
+          width={boardWidth}
+          height={boardHeight}
+        />
 
-        {/* Question overlay */}
+        {/* Question overlay — covers board entirely */}
         {phase === "question" && (
           <div
-            className="absolute inset-0 flex flex-col items-center justify-center rounded-xl backdrop-blur-sm"
+            className="absolute inset-0 flex flex-col items-center justify-center rounded-xl backdrop-blur-xl"
             style={{ background: "rgba(10,16,21,0.88)", animation: "slideIn 0.25s ease" }}
           >
             <p className="text-[11px] tracking-[4px] text-white/35 uppercase mb-3">
@@ -243,18 +234,19 @@ export default function App() {
           </div>
         )}
 
-        {/* Feedback overlay — rounded-xl matches the board container */}
+        {/* Feedback overlay */}
         {phase === "feedback" && <FeedbackScreen correct={feedback} />}
-      </div>
 
-      {/* Answer input area */}
-      <div className="mt-4" style={{ width: boardWidth }}>
+        {/* Input overlay — floats over bottom of board so shapes stay visible above */}
         {phase === "board" && (
-          <div style={{ animation: "slideIn 0.2s ease" }}>
-            <p className="text-[11px] tracking-[3px] text-white/40 uppercase mb-2">
-              {question?.text}
-            </p>
-            <div className="flex gap-2.5">
+          <div
+            className="absolute bottom-0 left-0 right-0 p-2 rounded-b-xl"
+            style={{
+              background: "linear-gradient(to top, rgba(10,16,21,0.75) 0%, transparent)",
+              animation: "slideIn 0.2s ease",
+            }}
+          >
+            <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>
               <input
                 ref={inputRef}
                 type="number"
@@ -262,20 +254,19 @@ export default function App() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={handleKey}
-                placeholder="Your answer..."
-                className="flex-1 px-4 py-3 text-lg font-bold font-mono text-white rounded-lg"
+                placeholder="Type your answer..."
+                className="w-full px-3 py-2 text-sm font-bold font-mono text-white rounded-lg"
                 style={{
-                  background: "rgba(255,255,255,0.05)",
-                  border: "2px solid rgba(255,255,255,0.12)",
+                  background: "rgba(255,255,255,0.06)",
+                  border: "1px solid rgba(255,255,255,0.1)",
                   transition: "border-color 0.2s",
                 }}
-                onFocus={(e) => (e.target.style.borderColor = "rgba(99,179,237,0.5)")}
-                onBlur={(e)  => (e.target.style.borderColor = "rgba(255,255,255,0.12)")}
+                onFocus={(e) => (e.target.style.borderColor = "rgba(99,179,237,0.4)")}
+                onBlur={(e)  => (e.target.style.borderColor = "rgba(255,255,255,0.1)")}
               />
-            </div>
+            </form>
           </div>
         )}
-        {phase !== "board" && <div className="h-14" />}
       </div>
     </div>
   );
