@@ -1,10 +1,14 @@
+import { TOTAL_TIME, STREAK_BONUS, STREAK_NEEDED } from "../constants";
+import { useEnterKey } from "../hooks/useEnterKey";
+
 export default function StartScreen({ onStart }) {
+  useEnterKey(onStart);
   return (
     <div
       className="min-h-screen flex flex-col items-center justify-center font-mono text-white p-6"
       style={{ background: "linear-gradient(135deg, #0a1015 0%, #0f1e2e 100%)" }}
     >
-      <div className="text-5xl mb-20">🔷</div>
+      <div className="text-5xl mb-2">🔷</div>
 
       <h1
         className="text-4xl font-black tracking-[6px] uppercase m-0"
@@ -18,12 +22,12 @@ export default function StartScreen({ onStart }) {
       </h1>
 
       <p className="text-white/50 text-sm mt-2 tracking-widest text-center max-w-xs">
-        Count the shapes. Beat the clock. Chain 6 correct answers for bonus time.
+        Count the shapes. Beat the clock. Chain {STREAK_NEEDED} correct answers for bonus time.
       </p>
 
       <div className="mt-8 flex flex-col gap-2.5 text-sm text-white/40 tracking-wide">
-        <span>⏱ 45 seconds on the clock</span>
-        <span>🔥 4-streak = +7 seconds</span>
+        <span>⏱ {TOTAL_TIME} seconds on the clock</span>
+        <span>🔥 {STREAK_NEEDED}-streak = +{STREAK_BONUS} seconds</span>
       </div>
 
       <button

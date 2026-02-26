@@ -267,16 +267,6 @@ export default function App() {
                 onFocus={(e) => (e.target.style.borderColor = "rgba(99,179,237,0.5)")}
                 onBlur={(e)  => (e.target.style.borderColor = "rgba(255,255,255,0.12)")}
               />
-              <button
-                onClick={handleSubmit}
-                className="px-6 py-3 text-[13px] font-black tracking-[3px] uppercase font-mono text-white rounded-lg border-none cursor-pointer"
-                style={{
-                  background: "linear-gradient(135deg, #2b6cb0, #3182ce)",
-                  boxShadow: "0 0 20px rgba(49,130,206,0.3)",
-                }}
-              >
-                Submit
-              </button>
             </div>
           </div>
         )}

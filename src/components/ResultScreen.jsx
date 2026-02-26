@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { useEnterKey } from "../hooks/useEnterKey";
 
 function Row({ label, children }) {
   return (
@@ -14,12 +15,7 @@ export default function ResultScreen({ correct, total, elapsed, onRestart }) {
   const scoreColor = pct >= 75 ? "#68d391" : pct >= 50 ? "#f6ad55" : "#fc4444";
   const emoji = pct >= 75 ? "🏆" : pct >= 50 ? "🎯" : "💀";
 
-  // Press Enter to play again
-  useEffect(() => {
-    const onKey = (e) => { if (e.key === "Enter") onRestart(); };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onRestart]);
+  useEnterKey(onRestart)
 
   return (
     <div
