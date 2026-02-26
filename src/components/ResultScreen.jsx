@@ -1,4 +1,3 @@
-import { useEffect } from "react";
 import { useEnterKey } from "../hooks/useEnterKey";
 
 function Row({ label, children }) {
